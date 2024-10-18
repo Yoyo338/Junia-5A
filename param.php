@@ -1,7 +1,7 @@
 <?php
 	$base = 'site';
-	$pass = '';
-	$user = 'toto';
+	$pass = 'application';
+	$user = 'app';
 	$host = 'localhost';
 
 	//$base = 'qdeclercq';
