@@ -34,7 +34,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t yoyo338/nginx:latest .
+          docker build -t yoyo338/nginx-junia:latest .
 
   push:
     name: Push Docker Image to Docker Hub
