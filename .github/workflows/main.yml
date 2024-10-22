@@ -1,0 +1,53 @@
+name: PHP Lint, Build and Push
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  lint:
+    name: Run PHP Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install PHP
+        run: sudo apt-get install php-cli
+
+      - name: Run PHP lint on all PHP files
+        run: |
+          for file in $(git ls-files "*.php"); do
+            php -l $file;
+          done
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: lint  # Ce job ne s'exécute qu'après le job 'lint'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t your-dockerhub-username/your-image-name:latest .
+
+  push:
+    name: Push Docker Image to Docker Hub
+    runs-on: ubuntu-latest
+    needs: build  # Ce job ne s'exécute qu'après le job 'build'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push your-dockerhub-username/your-image-name:latest
