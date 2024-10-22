@@ -1,4 +1,4 @@
-name: PHP Lint, Build and Push
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,26 +7,23 @@ on:
 
 jobs:
   lint:
-    name: Run PHP Lint
-    runs-on: [self-hosted]
+    name: Lint PHP files
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install PHP
-        run: sudo apt-get install php-cli
-
-      - name: Run PHP lint on all PHP files
+      - name: Run PHP Lint
         run: |
           for file in $(git ls-files "*.php"); do
-            php -l $file;
+            php -l "$file"
           done
 
   build:
     name: Build Docker Image
-    runs-on: [self-hosted]
-    needs: lint  # Ce job ne s'exécute qu'après le job 'lint'
+    runs-on: ubuntu-latest
+    needs: lint
 
     steps:
       - name: Checkout repository
@@ -34,45 +31,45 @@ jobs:
 
       - name: Build Docker image
         run: |
-          sudo docker build -t yoyo338/nginx-junia:latest .
+          docker build -t Yoyo338/nginx-junia:latest .
 
   push:
     name: Push Docker Image to Docker Hub
-    runs-on: [self-hosted]
-    needs: build  # Ce job ne s'exécute qu'après le job 'build'
+    runs-on: ubuntu-latest
+    needs: build
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
-        run: sudo docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password "${{ secrets.DOCKER_HUB_PASSWORD }}"
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
       - name: Push Docker image to Docker Hub
         run: |
-          sudo docker push yoyo338/nginx-junia:latest
+          docker push Yoyo338/nginx-junia:latest
 
-deploy:
-  name: Deploy to Remote Server
-  runs-on: ubuntu-latest
-  needs: push  # Ce job ne s'exécute qu'après le job 'push'
+  deploy:
+    name: Deploy to Remote Server
+    runs-on: ubuntu-latest
+    needs: push
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Pull Docker images and start containers
-      run: |
-        ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
-          docker pull Yoyo338/nginx-junia:latest
-          docker pull Yoyo338/php-junia:latest
-          docker run -d --name nginx -p 80:80 Yoyo338/nginx-junia:latest
-          docker run -d --name php --link nginx Yoyo338/php-junia:latest
-        EOF
+      - name: Pull Docker images and start containers
+        run: |
+          ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
+            docker pull Yoyo338/nginx-junia:latest
+            docker pull Yoyo338/php-junia:latest
+            docker run -d --name nginx -p 80:80 Yoyo338/nginx-junia:latest
+            docker run -d --name php --link nginx Yoyo338/php-junia:latest
+          EOF
