@@ -43,40 +43,11 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
-        run: docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password "${{ secrect.DOCKER_HUB_PASSWORD }}"
-
-      - name: push docker
-        run: docker push yoyo338/nginx-junia:latest
-
-  deploy:
-    name: Deploy to Remote Server
-    runs-on: [self-hosted]
-    needs: push
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Pull Docker images and start containers
-        run: |
-          ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
-            docker pull Yoyo338/nginx-junia:latest
-            docker pull Yoyo338/php-junia:latest
-            docker run -d --name nginx -p 80:80 Yoyo338/nginx-junia:latest
-            docker run -d --name php --link nginx Yoyo338/php-junia:latest
-          EOF
-
+        run: docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password "${{ secrets.DOCKER_HUB_PASSWORD }}"
 
       - name: Push Docker image to Docker Hub
         run: |
-          docker push Yoyo338/nginx-junia:latest
+          docker push yoyo338/nginx-junia:latest
 
   deploy:
     name: Deploy to Remote Server
