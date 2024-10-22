@@ -1,3 +1,4 @@
+
 name: PHP Lint, Build and Push
 
 on:
@@ -50,4 +51,4 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: |
-          docker push your-dockerhub-username/your-image-name:latest
+          docker push Yoyo338/nginx:stable-perl
