@@ -8,6 +8,51 @@ on:
 jobs:
   lint:
     name: Lint PHP files
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run PHP Lint
+        run: |
+          for file in $(git ls-files "*.php"); do
+            php -l "$file"
+          done
+
+  build:
+    name: Build Docker Image
+    runs-on: [self-hosted]
+    needs: lint
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t Yoyo338/nginx-junia:latest .
+
+  push:
+    name: Push Docker Image to Docker Hub
+    runs-on: [self-hosted]
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        run: docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password "${{ secrect.DOCKER_HUB_PASSWORD }}"
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  lint:
+    name: Lint PHP files
     runs-on: ubuntu-latest
 
     steps:
@@ -52,6 +97,36 @@ jobs:
   deploy:
     name: Deploy to Remote Server
     runs-on: ubuntu-latest
+    needs: push
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.REMOTE_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Pull Docker images and start containers
+        run: |
+          ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
+            docker pull Yoyo338/nginx-junia:latest
+            docker pull Yoyo338/php-junia:latest
+            docker run -d --name nginx -p 80:80 Yoyo338/nginx-junia:latest
+            docker run -d --name php --link nginx Yoyo338/php-junia:latest
+          EOF
+
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push Yoyo338/nginx-junia:latest
+
+  deploy:
+    name: Deploy to Remote Server
+    runs-on: [self-hosted]
     needs: push
 
     steps:
