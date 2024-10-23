@@ -63,10 +63,10 @@ jobs:
           if [ "$(docker ps -q -f name=nginx-SSH)" ]; then
               echo "Container 'nginx' is running. Stopping and removing it."
               docker stop nginx-SSH
-              docker rm nginx-SSH
           else
               echo "Container 'nginx' is not running."
           fi
+          docker rm nginx-SSH
           ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
             docker pull yoyo338/nginx-junia:latest
             docker run -d --name nginx-SSH -p 80:80 yoyo338/nginx-junia:latest
