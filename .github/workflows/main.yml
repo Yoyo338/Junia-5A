@@ -66,7 +66,7 @@ jobs:
           else
               echo "Container 'nginx' is not running."
           fi
-          if [ "(docker ps -q -a -f name=nginx-SSH)" ]; then
+          if [ "$(docker ps -q -a -f name=nginx-SSH)" ]; then
             docker rm nginx-SSH
           fi
           ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
