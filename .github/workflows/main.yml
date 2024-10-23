@@ -68,8 +68,8 @@ jobs:
       - name: Pull Docker images and start containers
         run: |
           ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
-            docker pull Yoyo338/nginx-junia:latest
-            docker pull Yoyo338/php-junia:latest
-            docker run -d --name nginx -p 80:80 Yoyo338/nginx-junia:latest
-            docker run -d --name php --link nginx Yoyo338/php-junia:latest
+            docker pull yoyo338/nginx-junia:latest
+            docker pull yoyo338/php-junia:latest
+            docker run -d --name nginx -p 80:80 yoyo338/nginx-junia:latest
+            docker run -d --name php --link nginx yoyo338/php-junia:latest
           EOF
