@@ -67,6 +67,13 @@ jobs:
 
       - name: Pull Docker images and start containers
         run: |
+          if [ "$(docker ps -q -f name=nginx)" ]; then
+              echo "Container 'nginx' is running. Stopping and removing it."
+              docker stop nginx
+              docker rm nginx
+          else
+              echo "Container 'nginx' is not running."
+          fi
           ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} << 'EOF'
             docker pull yoyo338/nginx-junia:latest
             docker run -d --name nginx-SSH -p 80:80 yoyo338/nginx-junia:latest
